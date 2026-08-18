@@ -19,7 +19,7 @@ function freshUserData(user = {}) {
   const vis = { ...baseVis, ...overrides };
 
   return {
-    goldPrice: { ratePerGram: 550, lastUpdated: null, updateIntervalHours: 0 },
+    goldPrice: { ratePerGram: 550, lastUpdated: null, updateIntervalHours: 24 },
     diamondChart: DIAMOND_CHART_SEED.map(r => ({ ...r })),
     pricingMethod: { mode: 'manual', percent: 0 },
     charges: { ...DEFAULT_CHARGES },
@@ -268,7 +268,7 @@ function reducer(state, action) {
 
 // ─── Context ───────────────────────────────────────────────────────────────────
 const AppContext = createContext(null);
-const STORAGE_KEY = 'swa_finder_state_v5'; // bumped: default discounts set to 0, rizoya breakup
+const STORAGE_KEY = 'swa_finder_state_v6'; // bumped: new diamond/making discount limits, gold 24h default
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, () => {

@@ -111,8 +111,20 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
   );
 }
 
-// ─── Discount opt-in row (editable) ──────────────────────────────────────────
-function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value }) {
+// ─── Discount opt-in row (editable, optional limit enforcement) ───────────────
+function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value, limit, onLimitHit }) {
+  const hasLimit = limit > 0;
+  const atLimit  = hasLimit && parseFloat(pct) >= limit;
+
+  const handleChange = (val) => {
+    let num = parseFloat(val) || 0;
+    if (hasLimit && num >= limit) {
+      num = limit;
+      if (onLimitHit) onLimitHit();
+    }
+    onPctChange(String(num));
+  };
+
   return (
     <div className="breakup-row" style={{ background: enabled ? '#FFF5F5' : 'var(--surface)', flexWrap: 'wrap', gap: 4 }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -129,12 +141,16 @@ function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value }) {
           <span className="breakup-label" style={{ color: enabled ? 'var(--error)' : 'var(--text-muted)', fontWeight: enabled ? 600 : 400, margin: 0 }}>{label}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <input className="td-input" type="number" value={pct}
-              onChange={e => onPctChange(e.target.value)}
+              onChange={e => handleChange(e.target.value)}
               style={{ width: 44, background: enabled ? '#FFECEC' : '#FFFBEA', borderColor: enabled ? '#F5A0A0' : '#E0C84A' }} />
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>%</span>
+            {atLimit && (
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 4, padding: '2px 5px' }}>MAX</span>
+            )}
           </div>
         </div>
         {!enabled && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 30 }}>Click ☑ to apply</div>}
+        {hasLimit && enabled && <div style={{ fontSize: 10, color: 'var(--text-muted)', paddingLeft: 30 }}>Limit: {limit}%</div>}
       </div>
       <div className="breakup-value" style={{ color: enabled ? 'var(--error)' : 'var(--text-muted)' }}>
         {enabled ? fmtAED(value) : '—'}
@@ -142,6 +158,7 @@ function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value }) {
     </div>
   );
 }
+
 
 // ─── Certification Charge editable row ───────────────────────────────────────
 function CertRow({ charges, dispatch, show }) {
@@ -327,7 +344,7 @@ function RizoyaBreakup({ bp, item, updateItem, charges, dispatch, goldRate, show
               </div>
             ))}
             {show('totalDiamondAmt') && <div className="breakup-row" style={{ background: 'var(--neutral-50)' }}><div className="breakup-label" style={{ fontWeight: 700 }}>Total Diamond Amount</div><div className="breakup-value" style={{ fontWeight: 800 }}>{fmtAED(bp.totalDiamondAmount)}</div></div>}
-            {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} />}
+            {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} limit={charges.diamondDiscountLimitPct || 0} onLimitHit={() => { playLimitAlert(); setShowPopup(true); }} />}
           </div>
 
           {/* METAL DETAILS — read-only */}
@@ -344,7 +361,7 @@ function RizoyaBreakup({ bp, item, updateItem, charges, dispatch, goldRate, show
               {show('goldAmount') && <div style={{ fontWeight: 700 }}>{fmtAED(bp.goldAmount)}</div>}
             </div>
             {show('makingCharge') && <div className="breakup-row"><div className="breakup-label">Making Charge<span className={`badge ${bp.makingChargeMode === 'fixed' ? 'badge-error' : 'badge-success'}`} style={{ marginLeft: 6, fontSize: 10 }}>{bp.makingChargeMode === 'fixed' ? 'Fixed' : `${charges.makingChargePercent}%`}</span></div><div className="breakup-value">{fmtAED(bp.makingCharge)}</div></div>}
-            {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} />}
+            {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} limit={charges.makingDiscountLimitPct || 0} onLimitHit={() => { playLimitAlert(); setShowPopup(true); }} />}
           </div>
 
           {/* OTHER STONE — read-only */}
@@ -477,6 +494,7 @@ export default function CostBreakupScreen() {
       <StatusBar />
       <NavBar title="Cost Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
 
+      {showLimitPopup && <DiscountLimitPopup onClose={() => setShowLimitPopup(false)} />}
       <div className="screen-scroll">
         <div style={{ background: 'var(--surface)', padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: `${user?.accentColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💍</div>
@@ -517,7 +535,7 @@ export default function CostBreakupScreen() {
               </div>
             ))}
             {show('totalDiamondAmt') && <div className="breakup-row" style={{ background: 'var(--neutral-50)' }}><div className="breakup-label" style={{ fontWeight: 700 }}>Total Diamond Amount</div><div className="breakup-value" style={{ fontWeight: 800 }}>{fmtAED(bp.totalDiamondAmount)}</div></div>}
-            {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} />}
+            {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} limit={charges.diamondDiscountLimitPct || 0} onLimitHit={() => { playLimitAlert(); setShowLimitPopup(true); }} />}
           </div>
 
           {/* METAL DETAILS — read-only */}
@@ -534,7 +552,7 @@ export default function CostBreakupScreen() {
               {show('goldAmount') && <div style={{ fontWeight: 700 }}>{fmtAED(bp.goldAmount)}</div>}
             </div>
             {show('makingCharge') && <div className="breakup-row"><div className="breakup-label">Making Charge<span className={`badge ${bp.makingChargeMode === 'fixed' ? 'badge-error' : 'badge-success'}`} style={{ marginLeft: 6, fontSize: 10 }}>{bp.makingChargeMode === 'fixed' ? 'Fixed' : `${charges.makingChargePercent}%`}</span></div><div className="breakup-value">{fmtAED(bp.makingCharge)}</div></div>}
-            {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} />}
+            {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} limit={charges.makingDiscountLimitPct || 0} onLimitHit={() => { playLimitAlert(); setShowLimitPopup(true); }} />}
           </div>
 
           {/* OTHER STONE — read-only */}

@@ -212,8 +212,10 @@ export const DEFAULT_CHARGES = {
   mcFixedMinCharge: 200,
   otherStoneRatePerCt: 50,
   // RIZOYA user-configurable pricing
-  markupPct: 0,          // Item markup % applied to Grand Total (0 = disabled)
-  discountLimitPct: 100, // Max discount % user can offer (100 = no limit)
+  markupPct: 0,               // Item markup % applied to Grand Total (0 = disabled)
+  discountLimitPct: 0,        // Max customer discount % on marked-up price (0 = no limit)
+  diamondDiscountLimitPct: 0, // Max discount % on diamond amount (0 = no limit)
+  makingDiscountLimitPct: 0,  // Max discount % on making charge (0 = no limit)
 };
 
 // ─── Field Visibility — all ON by default ─────────────────────────────────────
