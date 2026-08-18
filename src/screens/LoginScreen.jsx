@@ -24,7 +24,7 @@ export default function LoginScreen() {
     if (ok) {
       navigate('splash');
     } else {
-      setError('Invalid credentials. Try bluestone / 1234');
+      setError('Invalid credentials. Try swaburjman / 1234');
       setLoading(false);
     }
   };
@@ -187,26 +187,39 @@ export default function LoginScreen() {
 
         {/* Demo hint */}
         <div className="hint-box" style={{ marginTop: 20 }}>
-          <div style={{ fontWeight: 700, color: 'var(--gold-dark)', marginBottom: 6, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 }}>Demo Credentials (password: 1234)</div>
-          {[
-            { u: 'swaburjman', b: 'SWA Burjman ⭐ Special', color: '#B8860B' },
-            { u: 'rizoya',     b: 'RIZOYA Jewellery',       color: '#7C3AED' },
-            { u: 'bluestone',  b: 'Bluestone Jewels',       color: '#1A5CBA' },
-            { u: 'malabar',    b: 'Malabar Diamonds',       color: '#8B1A1A' },
-            { u: 'joyalukkas', b: 'Joyalukkas Fine',        color: '#1A7A4A' },
-          ].map(d => (
-            <div
-              key={d.u}
-              style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, cursor: 'pointer', padding: '3px 6px', borderRadius: 4, transition: 'background 0.15s' }}
-              onClick={() => { setUsername(d.u); setPassword('1234'); setError(''); }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,162,75,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{d.u}</span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.b}</span>
+          <div style={{ fontWeight: 700, color: 'var(--gold-dark)', marginBottom: 10, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 }}>Demo Accounts (password: 1234)</div>
+
+          {/* SWA Burjman */}
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1.5px solid rgba(184,134,11,0.3)', background: 'rgba(184,134,11,0.06)', marginBottom: 8, cursor: 'pointer', transition: 'all 0.18s ease' }}
+            onClick={() => { setUsername('swaburjman'); setPassword('1234'); setError(''); }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,134,11,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,134,11,0.06)'}
+          >
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #B8860B, #8B6914)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>⭐</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#B8860B', letterSpacing: 0.2 }}>SWA Burjman</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Exclusive Retailer · 50% markup · Admin-locked</div>
             </div>
-          ))}
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>👆 Tap any row to autofill</div>
+            <div style={{ background: 'rgba(184,134,11,0.15)', border: '1px solid rgba(184,134,11,0.3)', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, color: '#B8860B', whiteSpace: 'nowrap' }}>Exclusive User</div>
+          </div>
+
+          {/* RIZOYA */}
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1.5px solid rgba(124,58,237,0.3)', background: 'rgba(124,58,237,0.06)', marginBottom: 8, cursor: 'pointer', transition: 'all 0.18s ease' }}
+            onClick={() => { setUsername('rizoya'); setPassword('1234'); setError(''); }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(124,58,237,0.06)'}
+          >
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #7C3AED, #5B21B6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💜</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#7C3AED', letterSpacing: 0.2 }}>RIZOYA Jewellery</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>B2B Wholesale · Custom markup &amp; discount limits</div>
+            </div>
+            <div style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, color: '#7C3AED', whiteSpace: 'nowrap' }}>B2B User</div>
+          </div>
+
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>👆 Tap any card to autofill</div>
         </div>
       </div>
     </div>

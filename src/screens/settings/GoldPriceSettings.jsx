@@ -43,7 +43,9 @@ export default function GoldPriceSettings() {
   };
 
   const handleSaveInterval = () => {
-    const h = parseFloat(intervalHours) || 0;
+    let h = parseFloat(intervalHours) || 24;
+    if (h < 1) h = 1; // minimum 1 hour — reminder cannot be turned off
+    setIntervalHours(String(h));
     dispatch({ type: 'SET_GOLD_INTERVAL', hours: h });
     setIntervalSaved(true);
     setTimeout(() => setIntervalSaved(false), 2000);
@@ -144,14 +146,14 @@ export default function GoldPriceSettings() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
               A reminder popup will appear after this many hours since the last gold rate update.
-              Set to <strong>0</strong> to disable.
+              <strong style={{ color: 'var(--error)' }}> Minimum 1 hour — reminder cannot be turned off.</strong>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   className="input-field"
-                  type="number" inputMode="decimal" min="0" step="0.5"
-                  placeholder="Hours (0 = off)"
+                  type="number" inputMode="decimal" min="1" step="0.5"
+                  placeholder="Hours (min 1)"
                   value={intervalHours}
                   onChange={e => setIntervalHours(e.target.value)}
                   style={{ paddingRight: 50, fontSize: 18, fontWeight: 700 }}
@@ -169,7 +171,7 @@ export default function GoldPriceSettings() {
 
             {/* Preset buttons */}
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              {[0, 4, 8, 12, 24].map(h => (
+              {[1, 4, 8, 12, 24].map(h => (
                 <button key={h} onClick={() => setIntervalHours(String(h))}
                   style={{
                     padding: '5px 12px', borderRadius: 8, border: '1.5px solid var(--border)',
@@ -178,7 +180,7 @@ export default function GoldPriceSettings() {
                     color: intervalHours === String(h) ? 'var(--gold-dark)' : 'var(--text-secondary)',
                     borderColor: intervalHours === String(h) ? 'var(--gold-border)' : 'var(--border)',
                   }}>
-                  {h === 0 ? 'Off' : `${h}h`}
+                  {`${h}h`}
                 </button>
               ))}
             </div>
