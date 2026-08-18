@@ -3,39 +3,9 @@ import { useApp } from '../context/AppContext';
 import NavBar, { StatusBar } from '../components/NavBar';
 import { calcBreakup, fmtAED, fmt2 } from '../utils/calculations';
 
-// ─── Warning Audio + Arabic TTS ───────────────────────────────────────────────
+// ─── Limit Alert (popup only — no audio/TTS) ──────────────────────────────────
 function playLimitAlert() {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      const ctx = new AudioCtx();
-      const tone = (freq, startTime, duration, volume = 0.45) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
-        gain.gain.setValueAtTime(volume, startTime + duration - 0.05);
-        gain.gain.linearRampToValueAtTime(0, startTime + duration);
-        osc.start(startTime); osc.stop(startTime + duration);
-      };
-      const now = ctx.currentTime;
-      tone(880, now, 0.18); tone(660, now + 0.22, 0.18); tone(440, now + 0.44, 0.30);
-      setTimeout(() => { try { ctx.close(); } catch {} }, 1200);
-    }
-  } catch (e) { console.warn('audio unavailable', e); }
-
-  try {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    setTimeout(() => {
-      const utt = new SpeechSynthesisUtterance('تم الوصول إلى حد الخصم. لا يمكننا تغطية التكلفة بأقل من هذا.');
-      utt.lang = 'ar-SA'; utt.rate = 0.88; utt.volume = 1.0;
-      window.speechSynthesis.speak(utt);
-    }, 800);
-  } catch (e) { console.warn('speech unavailable', e); }
+  // Audio & TTS removed — bilingual popup message only
 }
 
 // ─── Bilingual Limit Popup ────────────────────────────────────────────────────
@@ -85,7 +55,6 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
   const margin = customerPrice - costPrice;
   const marginPct = ((margin / costPrice) * 100).toFixed(1);
   const savedByDiscount = discountAmt;
-
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 200,
@@ -100,7 +69,6 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
         boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
         animation: 'scaleIn 0.25s cubic-bezier(.34,1.56,.64,1) forwards',
       }}>
-        {/* Header */}
         <div style={{ background: 'rgba(184,134,11,0.12)', padding: '14px 18px', borderBottom: '1px solid rgba(184,134,11,0.2)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>👁</span>
           <div>
@@ -108,17 +76,13 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>Not visible to customer · Do not share</div>
           </div>
         </div>
-
         <div style={{ padding: '16px 18px' }}>
           {[
             { label: 'Actual Cost Price', value: fmtAED(costPrice), color: 'rgba(255,255,255,0.6)', sub: 'What it costs us' },
             { label: 'Customer Price (before discount)', value: fmtAED(customerPrice), color: '#F5C518', sub: 'Price shown to customer' },
             { label: 'Margin (Markup)', value: `${fmtAED(margin)} (${marginPct}%)`, color: '#34D399', sub: 'Customer Price minus Cost' },
           ].map((row, i) => (
-            <div key={i} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-              padding: '10px 0', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-            }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
               <div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 2 }}>{row.label}</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{row.sub}</div>
@@ -126,37 +90,19 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
               <div style={{ fontSize: 15, fontWeight: 800, color: row.color }}>{row.value}</div>
             </div>
           ))}
-
           {savedByDiscount > 0 && (
-            <div style={{
-              marginTop: 12, background: 'rgba(192,57,43,0.12)',
-              border: '1px solid rgba(192,57,43,0.3)', borderRadius: 8, padding: '10px 12px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
+            <div style={{ marginTop: 12, background: 'rgba(192,57,43,0.12)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 8, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 12, color: 'rgba(255,100,80,0.9)' }}>Discount given to customer</div>
               <div style={{ fontSize: 14, fontWeight: 800, color: '#FF6B6B' }}>− {fmtAED(savedByDiscount)}</div>
             </div>
           )}
-
-          <div style={{
-            marginTop: 12, background: 'rgba(52,211,153,0.08)',
-            border: '1px solid rgba(52,211,153,0.25)', borderRadius: 8, padding: '10px 12px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
+          <div style={{ marginTop: 12, background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 8, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 12, color: 'rgba(52,211,153,0.9)', fontWeight: 700 }}>Final Price collected</div>
             <div style={{ fontSize: 16, fontWeight: 900, color: '#34D399' }}>{fmtAED(finalPrice)}</div>
           </div>
         </div>
-
         <div style={{ padding: '0 18px 18px' }}>
-          <button
-            onClick={onClose}
-            style={{
-              width: '100%', height: 42, borderRadius: 10,
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
+          <button onClick={onClose} style={{ width: '100%', height: 42, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             Close
           </button>
         </div>
@@ -165,7 +111,7 @@ function StaffInfoModal({ costPrice, customerPrice, discountAmt, finalPrice, onC
   );
 }
 
-// ─── Discount opt-in row (for regular users) ──────────────────────────────────
+// ─── Discount opt-in row (editable) ──────────────────────────────────────────
 function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value }) {
   return (
     <div className="breakup-row" style={{ background: enabled ? '#FFF5F5' : 'var(--surface)', flexWrap: 'wrap', gap: 4 }}>
@@ -197,6 +143,50 @@ function DiscountRow({ label, pct, enabled, onToggle, onPctChange, value }) {
   );
 }
 
+// ─── Certification Charge editable row ───────────────────────────────────────
+function CertRow({ charges, dispatch, show }) {
+  if (!show('certCharge')) return null;
+  const updateCharge = (payload) => dispatch({ type: 'UPDATE_CHARGES', payload });
+  return (
+    <div className="breakup-row" style={{ background: charges.includeCertification ? '#F0FFF4' : 'var(--surface)', flexWrap: 'wrap', gap: 4 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={() => updateCharge({ includeCertification: !charges.includeCertification })}
+          style={{
+            width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+            border: `2px solid ${charges.includeCertification ? 'var(--success)' : 'var(--neutral-300)'}`,
+            background: charges.includeCertification ? 'var(--success)' : 'transparent',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.18s ease',
+          }}>
+          {charges.includeCertification && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polyline points="2,6 5,9 10,3"/></svg>}
+        </button>
+        <span className="breakup-label" style={{ color: charges.includeCertification ? 'var(--success)' : 'var(--text-muted)', margin: 0 }}>Certification Charge</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input className="td-input" type="number"
+            value={charges.certificationCharge ?? 150}
+            onChange={e => updateCharge({ certificationCharge: parseFloat(e.target.value) || 0 })}
+            style={{ width: 70, background: charges.includeCertification ? '#F0FFF4' : 'var(--surface)', borderColor: charges.includeCertification ? '#5DBB63' : undefined }} />
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>AED</span>
+        </div>
+      </div>
+      <div className="breakup-value" style={{ color: charges.includeCertification ? 'var(--success)' : 'var(--text-muted)' }}>
+        {charges.includeCertification ? fmtAED(charges.certificationCharge ?? 150) : '—'}
+      </div>
+    </div>
+  );
+}
+
+// ─── Read-only value row helper ───────────────────────────────────────────────
+function RoRow({ label, value }) {
+  return (
+    <div className="breakup-row">
+      <div className="breakup-label">{label}</div>
+      <div className="breakup-value">{value}</div>
+    </div>
+  );
+}
+
 // ─── SWA Burjman Simplified Breakup ──────────────────────────────────────────
 function BurjmanBreakup({ bp, item, updateItem, navigate, showPopup, setShowPopup }) {
   const [showStaff, setShowStaff] = useState(false);
@@ -219,73 +209,31 @@ function BurjmanBreakup({ bp, item, updateItem, navigate, showPopup, setShowPopu
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
       {showPopup && <DiscountLimitPopup onClose={() => setShowPopup(false)} />}
       {showStaff && (
-        <StaffInfoModal
-          costPrice={bp.grandTotal}
-          customerPrice={specialPrice}
-          discountAmt={discountAmt}
-          finalPrice={finalPrice}
-          onClose={() => setShowStaff(false)}
-        />
+        <StaffInfoModal costPrice={bp.grandTotal} customerPrice={specialPrice}
+          discountAmt={discountAmt} finalPrice={finalPrice} onClose={() => setShowStaff(false)} />
       )}
-
       <div className="screen-scroll">
         <div style={{ padding: '12px 12px 0' }}>
-
-          {/* ── Product Details ── */}
+          {/* Product Details */}
           <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
             <div className="breakup-section-title">Product Details</div>
-            <div className="breakup-row">
-              <div className="breakup-label">SKU</div>
-              <input className="td-input" type="text" value={item.sku} style={{ width: 100 }}
-                onChange={e => updateItem({ sku: e.target.value })} />
-            </div>
-            <div className="breakup-row">
-              <div className="breakup-label">Barcode</div>
-              <input className="td-input" type="text" value={item.barcode} style={{ width: 110 }}
-                onChange={e => updateItem({ barcode: e.target.value })} />
-            </div>
-            <div className="breakup-row">
-              <div className="breakup-label">Gross Weight (g)</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <input className="td-input" type="number" inputMode="decimal" value={item.grossWeightG} style={{ width: 70 }}
-                  onChange={e => updateItem({ grossWeightG: parseFloat(e.target.value) || 0 })} />
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>g</span>
-              </div>
-            </div>
-            <div className="breakup-row">
-              <div className="breakup-label">Net Weight (g)</div>
-              <div className="breakup-value">{fmt2(bp.netWeightG)} g</div>
-            </div>
-            <div className="breakup-row">
-              <div className="breakup-label">Diamond Weight (ct)</div>
-              <div className="breakup-value">{fmt2(bp.totalDiamondWeightCt)} ct</div>
-            </div>
-            <div className="breakup-row">
-              <div className="breakup-label">Metal / Karat</div>
-              <div className="breakup-value">{item.metal} · {item.karat}</div>
-            </div>
+            <RoRow label="SKU" value={item.sku} />
+            <RoRow label="Barcode" value={item.barcode} />
+            <RoRow label="Gross Weight (g)" value={`${fmt2(item.grossWeightG)} g`} />
+            <RoRow label="Net Weight (g)" value={`${fmt2(bp.netWeightG)} g`} />
+            <RoRow label="Diamond Weight (ct)" value={`${fmt2(bp.totalDiamondWeightCt)} ct`} />
+            <RoRow label="Metal / Karat" value={`${item.metal} · ${item.karat}`} />
           </div>
-
-          {/* ── Special Price Box (clean — no markup mention) ── */}
+          {/* Price */}
           <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
             <div className="breakup-section-title" style={{ color: '#B8860B' }}>Price</div>
-
-            {/* Discount input — no label about markup */}
             <div className="breakup-row" style={{ flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
               <div className="breakup-label" style={{ flex: 1 }}>Customer Discount</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input
-                  type="number" inputMode="decimal"
-                  className="td-input"
-                  value={item.specialDiscountPct || 0}
-                  min="0"
+                <input type="number" inputMode="decimal" className="td-input"
+                  value={item.specialDiscountPct || 0} min="0"
                   onChange={e => handleDiscount(e.target.value)}
-                  style={{
-                    width: 56, fontSize: 16, fontWeight: 700, textAlign: 'center',
-                    background: discPct > 0 ? '#FFECEC' : 'var(--surface)',
-                    borderColor: discPct > 0 ? '#F5A0A0' : undefined,
-                  }}
-                />
+                  style={{ width: 56, fontSize: 16, fontWeight: 700, textAlign: 'center', background: discPct > 0 ? '#FFECEC' : 'var(--surface)', borderColor: discPct > 0 ? '#F5A0A0' : undefined }} />
                 <span style={{ fontSize: 13, color: 'var(--error)', fontWeight: 700 }}>%</span>
                 {discPct >= MAX_DISCOUNT && (
                   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 4, padding: '2px 6px' }}>MAX</span>
@@ -297,45 +245,18 @@ function BurjmanBreakup({ bp, item, updateItem, navigate, showPopup, setShowPopu
                 </div>
               )}
             </div>
-
-            {/* Final Price */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1C1914 0%, #2A2318 100%)',
-              padding: '14px 16px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5C518', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                Final Price
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#F5C518' }}>
-                {fmtAED(finalPrice)}
-              </div>
+            <div style={{ background: 'linear-gradient(135deg, #1C1914 0%, #2A2318 100%)', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5C518', letterSpacing: 0.5, textTransform: 'uppercase' }}>Final Price</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#F5C518' }}>{fmtAED(finalPrice)}</div>
             </div>
           </div>
         </div>
-
-        {/* Print button + Staff button row */}
         <div style={{ padding: '4px 12px 32px', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn btn-primary" style={{ flex: 1, fontSize: 15 }}
-            onClick={() => navigate('printslip')}>
-            🖨 Print Slip
-          </button>
-
-          {/* Discreet salesman button */}
-          <button
-            onClick={() => setShowStaff(true)}
-            title="Staff Reference"
-            style={{
-              width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-              background: 'rgba(184,134,11,0.1)',
-              border: '1.5px solid rgba(184,134,11,0.25)',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, transition: 'all 0.18s ease',
-            }}
+          <button className="btn btn-primary" style={{ flex: 1, fontSize: 15 }} onClick={() => navigate('printslip')}>🖨 Print Slip</button>
+          <button onClick={() => setShowStaff(true)} title="Staff Reference"
+            style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: 'rgba(184,134,11,0.1)', border: '1.5px solid rgba(184,134,11,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, transition: 'all 0.18s ease' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,134,11,0.2)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,134,11,0.1)'}
-          >
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,134,11,0.1)'}>
             👁
           </button>
         </div>
@@ -344,97 +265,64 @@ function BurjmanBreakup({ bp, item, updateItem, navigate, showPopup, setShowPopu
   );
 }
 
-// ─── Main Cost Breakup Screen ─────────────────────────────────────────────────
-export default function CostBreakupScreen() {
-  const { userData, dispatch, navigate, goBack, state } = useApp();
-  const user = state.currentUser;
-  const isSpecial = user?.isSpecial;
-  const gold = userData?.goldPrice;
-  const charges = userData?.charges || {};
-  const vis = userData?.fieldVisibility?.breakup || {};
-  const item = userData?.sampleItem;
+// ─── RIZOYA Full Breakup (read-only values; discounts + cert editable) ────────
+function RizoyaBreakup({ bp, item, updateItem, charges, dispatch, goldRate, show, navigate, showPopup, setShowPopup }) {
+  const [showStaff, setShowStaff] = useState(false);
 
-  const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const markupPct      = parseFloat(charges.markupPct) || 0;
+  const maxDiscountPct = parseFloat(charges.discountLimitPct) ?? 100;
 
-  const updateItem = (payload) => dispatch({ type: 'UPDATE_SAMPLE_ITEM', payload });
-  const updateDiamond = (id, payload) => dispatch({ type: 'UPDATE_DIAMOND_IN_ITEM', id, payload });
+  const markedUpPrice  = bp.grandTotal * (1 + markupPct / 100);
+  const discPct        = parseFloat(item.markupDiscountPct) || 0;
+  const discountAmt    = markedUpPrice * (discPct / 100);
+  const finalPrice     = markedUpPrice - discountAmt;
 
-  if (!item) return null;
+  const handleDiscount = (val) => {
+    let num = parseFloat(val) || 0;
+    if (isNaN(num) || num < 0) num = 0;
+    const hitLimit = num >= maxDiscountPct;
+    if (num > maxDiscountPct) num = maxDiscountPct;
+    updateItem({ markupDiscountPct: num });
+    if (hitLimit) { playLimitAlert(); setShowPopup(true); }
+  };
 
-  const goldRate = gold?.ratePerGram || 550;
-  const bp = calcBreakup(item, goldRate, charges, userData?.diamondChart);
-  const show = (key) => vis[key] !== false;
-
-  // ── SWA Burjman: show simplified view ──────────────────────────────────────
-  if (isSpecial) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards', minHeight: 0 }}>
-        <StatusBar />
-        <NavBar title="Price Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
-        <BurjmanBreakup
-          bp={bp} item={item} updateItem={updateItem} navigate={navigate}
-          showPopup={showLimitPopup} setShowPopup={setShowLimitPopup}
-        />
-      </div>
-    );
-  }
-
-  // ── Standard full breakup (all other users) ────────────────────────────────
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards', minHeight: 0, position: 'relative' }}>
-      <StatusBar />
-      <NavBar title="Cost Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
-
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
+      {showPopup && <DiscountLimitPopup onClose={() => setShowPopup(false)} />}
+      {showStaff && (
+        <StaffInfoModal costPrice={bp.grandTotal} customerPrice={markedUpPrice}
+          discountAmt={discountAmt} finalPrice={finalPrice} onClose={() => setShowStaff(false)} />
+      )}
       <div className="screen-scroll">
-        {/* Header info bar */}
-        <div style={{ background: 'var(--surface)', padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${user?.accentColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💍</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>Brilliant Diamond Ring</div>
-            <div className="gold-chip" style={{ fontSize: 11, marginTop: 4, display: 'inline-flex' }}>
-              <span className="gold-chip-dot" />18K Gold: AED {goldRate}/g
-            </div>
-          </div>
-        </div>
-
         <div style={{ padding: '12px 12px 0' }}>
-          {/* PRODUCT DETAILS */}
+
+          {/* PRODUCT DETAILS — read-only */}
           <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
             <div className="breakup-section-title">Product Details</div>
-            {show('sku') && <div className="breakup-row"><div className="breakup-label">SKU</div><input className="td-input" type="text" value={item.sku} style={{ width: 100 }} onChange={e => updateItem({ sku: e.target.value })} /></div>}
-            {show('barcode') && <div className="breakup-row"><div className="breakup-label">Barcode</div><input className="td-input" type="text" value={item.barcode} style={{ width: 110 }} onChange={e => updateItem({ barcode: e.target.value })} /></div>}
-            {show('grossWeight') && <div className="breakup-row"><div className="breakup-label">Gross Weight (g)</div><div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><input className="td-input" type="number" inputMode="decimal" value={item.grossWeightG} style={{ width: 70 }} onChange={e => updateItem({ grossWeightG: parseFloat(e.target.value) || 0 })} /><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>g</span></div></div>}
-            {show('otherWeight') && (
-              <div className="breakup-row" style={{ background: '#FFF8F0' }}>
-                <div className="breakup-label">
-                  Other Deduction (g)
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>− from gross</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <input className="td-input" type="number" inputMode="decimal"
-                    value={item.otherWeightG ?? 0} style={{ width: 70, borderColor: '#F0A040' }}
-                    onChange={e => updateItem({ otherWeightG: parseFloat(e.target.value) || 0 })} />
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>g</span>
-                </div>
-              </div>
-            )}
-            {show('netWeight') && <div className="breakup-row"><div className="breakup-label">Net Weight (g)</div><div className="breakup-value">{fmt2(bp.netWeightG)} g</div></div>}
-            {show('diamondWeight') && <div className="breakup-row"><div className="breakup-label">Diamond Weight (ct)</div><div className="breakup-value">{fmt2(bp.totalDiamondWeightCt)} ct</div></div>}
-            {show('otherStoneWeight') && <div className="breakup-row"><div className="breakup-label">Other Stone (ct)</div><div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><input className="td-input" type="number" inputMode="decimal" value={item.otherStoneWeightCt} style={{ width: 70 }} onChange={e => updateItem({ otherStoneWeightCt: parseFloat(e.target.value) || 0 })} /><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ct</span></div></div>}
+            {show('sku') && <RoRow label="SKU" value={item.sku} />}
+            {show('barcode') && <RoRow label="Barcode" value={item.barcode} />}
+            {show('grossWeight') && <RoRow label="Gross Weight (g)" value={`${fmt2(item.grossWeightG)} g`} />}
+            {show('otherWeight') && item.otherWeightG > 0 && <RoRow label="Other Deduction (g)" value={`${fmt2(item.otherWeightG)} g`} />}
+            {show('netWeight') && <RoRow label="Net Weight (g)" value={`${fmt2(bp.netWeightG)} g`} />}
+            {show('diamondWeight') && <RoRow label="Diamond Weight (ct)" value={`${fmt2(bp.totalDiamondWeightCt)} ct`} />}
+            {show('otherStoneWeight') && <RoRow label="Other Stone (ct)" value={`${item.otherStoneWeightCt} ct`} />}
           </div>
 
-          {/* DIAMOND DETAILS */}
+          {/* DIAMOND DETAILS — read-only */}
           <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
             <div className="breakup-section-title">Diamond Details</div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 40px 60px 76px 72px', gap: 4, padding: '6px 14px', background: 'var(--neutral-100)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              <div>Size</div><div>Qty</div><div>Carat</div><div>CT Price</div><div>Amount</div>
+              <div>Size</div><div>Qty</div>
+              {show('dCarat') && <div>Carat</div>}
+              {show('dCtPrice') && <div>CT Price</div>}
+              <div>Amount</div>
             </div>
             {bp.diamonds.map(d => (
               <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '2fr 40px 60px 76px 72px', gap: 4, padding: '7px 14px', borderBottom: '1px solid var(--border)', alignItems: 'center', fontSize: 12 }}>
                 <div style={{ fontWeight: 600, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.size}</div>
-                {show('dQty') && <input className="td-input" type="number" value={d.qty} style={{ width: 36, padding: '0 4px' }} onChange={e => updateDiamond(d.id, { qty: parseInt(e.target.value) || 0 })} />}
-                {show('dCarat') && <input className="td-input" type="number" inputMode="decimal" value={d.caratTotal} style={{ width: 56 }} onChange={e => updateDiamond(d.id, { caratTotal: parseFloat(e.target.value) || 0 })} />}
-                {show('dCtPrice') && <input className="td-input" type="number" value={d.ctPrice} style={{ width: 72 }} onChange={e => updateDiamond(d.id, { ctPrice: parseFloat(e.target.value) || 0 })} />}
+                {show('dQty') && <div style={{ fontSize: 12, fontWeight: 600 }}>{d.qty}</div>}
+                {show('dCarat') && <div style={{ fontSize: 12 }}>{d.caratTotal}</div>}
+                {show('dCtPrice') && <div style={{ fontSize: 12 }}>{d.ctPrice}</div>}
                 {show('dAmount') && <div style={{ textAlign: 'right', fontWeight: 700, fontSize: 12 }}>{d.amount.toFixed(2)}</div>}
               </div>
             ))}
@@ -442,7 +330,7 @@ export default function CostBreakupScreen() {
             {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} />}
           </div>
 
-          {/* METAL DETAILS */}
+          {/* METAL DETAILS — read-only */}
           <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
             <div className="breakup-section-title">Metal (Gold) Details</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, padding: '6px 14px', background: 'var(--neutral-100)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -459,7 +347,7 @@ export default function CostBreakupScreen() {
             {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} />}
           </div>
 
-          {/* OTHER STONE */}
+          {/* OTHER STONE — read-only */}
           {(show('osStone') || show('osCarat') || show('osAmount')) && (
             <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
               <div className="breakup-section-title">Other Stone</div>
@@ -475,7 +363,197 @@ export default function CostBreakupScreen() {
             </div>
           )}
 
-          {/* COST SUMMARY */}
+          {/* COST SUMMARY — cert editable, rest read-only */}
+          <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+            <div className="breakup-section-title">Cost Summary</div>
+            {show('sumDiamondAmt') && <div className="breakup-row"><div className="breakup-label">Diamond Amount</div><div className="breakup-value">{fmtAED(bp.totalDiamondAmount)}</div></div>}
+            {show('sumDiscDiamond') && item.diamondDiscountEnabled && <div className="breakup-row"><div className="breakup-label" style={{ color: 'var(--error)' }}>Less: Discount on Diamond ({item.diamondDiscountPct}%)</div><div className="breakup-value negative">{fmtAED(bp.discountOnDiamond)}</div></div>}
+            {show('sumGoldAmt') && <div className="breakup-row"><div className="breakup-label">Gold / Metal Amount</div><div className="breakup-value">{fmtAED(bp.goldAmount)}</div></div>}
+            {show('sumMakingCharge') && <div className="breakup-row"><div className="breakup-label">Making Charge</div><div className="breakup-value">{fmtAED(bp.makingCharge)}</div></div>}
+            {show('sumDiscMaking') && item.makingDiscountEnabled && <div className="breakup-row"><div className="breakup-label" style={{ color: 'var(--error)' }}>Less: Discount on Making ({item.makingDiscountPct}%)</div><div className="breakup-value negative">{fmtAED(bp.discountOnMaking)}</div></div>}
+            {show('sumOtherStone') && <div className="breakup-row"><div className="breakup-label">Other Stone Amount</div><div className="breakup-value">{fmtAED(bp.otherStoneAmount)}</div></div>}
+            {/* Certification — editable toggle + amount */}
+            <CertRow charges={charges} dispatch={dispatch} show={show} />
+            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+            {show('subtotal') && <div className="breakup-row" style={{ background: 'var(--neutral-50)' }}><div className="breakup-label" style={{ fontWeight: 700 }}>Subtotal (before VAT)</div><div className="breakup-value" style={{ fontWeight: 800, fontSize: 15 }}>{fmtAED(bp.subtotal)}</div></div>}
+            {show('vat') && <div className="breakup-row"><div className="breakup-label">VAT 5%</div><div className="breakup-value">{fmtAED(bp.vat)}</div></div>}
+            {show('grandTotal') && <div className="breakup-total-row"><div className="breakup-total-label">Grand Total</div><div className="breakup-total-value">{fmtAED(bp.grandTotal)}</div></div>}
+          </div>
+
+          {/* RIZOYA Customer Pricing */}
+          <div className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
+            <div className="breakup-section-title" style={{ color: '#7C3AED' }}>Customer Price</div>
+            <div className="breakup-row" style={{ flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              <div className="breakup-label" style={{ flex: 1 }}>Customer Discount</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input type="number" inputMode="decimal" className="td-input"
+                  value={item.markupDiscountPct ?? 0} min="0" max={maxDiscountPct}
+                  onChange={e => handleDiscount(e.target.value)}
+                  style={{ width: 56, fontSize: 16, fontWeight: 700, textAlign: 'center', background: discPct > 0 ? '#F3EFFE' : 'var(--surface)', borderColor: discPct > 0 ? '#A78BFA' : undefined }} />
+                <span style={{ fontSize: 13, color: '#7C3AED', fontWeight: 700 }}>%</span>
+                {discPct >= maxDiscountPct && maxDiscountPct < 100 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 4, padding: '2px 6px' }}>MAX</span>
+                )}
+              </div>
+              {discPct > 0 && (
+                <div style={{ width: '100%', textAlign: 'right', fontSize: 12, color: 'var(--error)', fontWeight: 600 }}>
+                  − {fmtAED(discountAmt)}
+                </div>
+              )}
+            </div>
+            <div style={{ background: 'linear-gradient(135deg, #1C1135 0%, #2A1A50 100%)', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#C4B5FD', letterSpacing: 0.5, textTransform: 'uppercase' }}>Final Price</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#C4B5FD' }}>{fmtAED(finalPrice)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 12px 32px', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn btn-primary btn-full" style={{ fontSize: 15, background: 'linear-gradient(135deg, #7C3AED, #5B21B6)', boxShadow: 'none', flex: 1 }} onClick={() => navigate('printslip')}>
+            🖨 Preview &amp; Print Slip
+          </button>
+          <button onClick={() => setShowStaff(true)} title="Staff Reference"
+            style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: 'rgba(124,58,237,0.1)', border: '1.5px solid rgba(124,58,237,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, transition: 'all 0.18s ease' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.2)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(124,58,237,0.1)'}>
+            👁
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Cost Breakup Screen ─────────────────────────────────────────────────
+export default function CostBreakupScreen() {
+  const { userData, dispatch, navigate, goBack, state } = useApp();
+  const user = state.currentUser;
+  const isSpecial = user?.isSpecial;
+  const isRizoya  = user?.id === 'rizoya';
+  const gold = userData?.goldPrice;
+  const charges = userData?.charges || {};
+  const vis = userData?.fieldVisibility?.breakup || {};
+  const item = userData?.sampleItem;
+
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+
+  const updateItem = (payload) => dispatch({ type: 'UPDATE_SAMPLE_ITEM', payload });
+  const updateDiamond = (id, payload) => dispatch({ type: 'UPDATE_DIAMOND_IN_ITEM', id, payload });
+
+  if (!item) return null;
+
+  const goldRate = gold?.ratePerGram || 550;
+  const bp = calcBreakup(item, goldRate, charges, userData?.diamondChart);
+  const show = (key) => vis[key] !== false;
+
+  // ── SWA Burjman ─────────────────────────────────────────────────────────────
+  if (isSpecial) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards', minHeight: 0 }}>
+        <StatusBar />
+        <NavBar title="Price Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
+        <BurjmanBreakup bp={bp} item={item} updateItem={updateItem} navigate={navigate}
+          showPopup={showLimitPopup} setShowPopup={setShowLimitPopup} />
+      </div>
+    );
+  }
+
+  // ── RIZOYA ──────────────────────────────────────────────────────────────────
+  if (isRizoya) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards', minHeight: 0 }}>
+        <StatusBar />
+        <NavBar title="Price Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
+        <RizoyaBreakup bp={bp} item={item} updateItem={updateItem}
+          charges={charges} dispatch={dispatch} goldRate={goldRate} show={show}
+          navigate={navigate} showPopup={showLimitPopup} setShowPopup={setShowLimitPopup} />
+      </div>
+    );
+  }
+
+  // ── Standard full breakup (all other users) — read-only except discounts/cert
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards', minHeight: 0, position: 'relative' }}>
+      <StatusBar />
+      <NavBar title="Cost Breakup" onBack={goBack} rightAction={{ label: '🖨 Print', onClick: () => navigate('printslip') }} />
+
+      <div className="screen-scroll">
+        <div style={{ background: 'var(--surface)', padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${user?.accentColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>💍</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Brilliant Diamond Ring</div>
+            <div className="gold-chip" style={{ fontSize: 11, marginTop: 4, display: 'inline-flex' }}>
+              <span className="gold-chip-dot" />18K Gold: AED {goldRate}/g
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '12px 12px 0' }}>
+          {/* PRODUCT DETAILS — read-only */}
+          <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+            <div className="breakup-section-title">Product Details</div>
+            {show('sku') && <RoRow label="SKU" value={item.sku} />}
+            {show('barcode') && <RoRow label="Barcode" value={item.barcode} />}
+            {show('grossWeight') && <RoRow label="Gross Weight (g)" value={`${fmt2(item.grossWeightG)} g`} />}
+            {show('otherWeight') && item.otherWeightG > 0 && <RoRow label="Other Deduction (g)" value={`${fmt2(item.otherWeightG)} g`} />}
+            {show('netWeight') && <RoRow label="Net Weight (g)" value={`${fmt2(bp.netWeightG)} g`} />}
+            {show('diamondWeight') && <RoRow label="Diamond Weight (ct)" value={`${fmt2(bp.totalDiamondWeightCt)} ct`} />}
+            {show('otherStoneWeight') && <RoRow label="Other Stone (ct)" value={`${item.otherStoneWeightCt} ct`} />}
+          </div>
+
+          {/* DIAMOND DETAILS — read-only */}
+          <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+            <div className="breakup-section-title">Diamond Details</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 40px 60px 76px 72px', gap: 4, padding: '6px 14px', background: 'var(--neutral-100)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <div>Size</div><div>Qty</div><div>Carat</div><div>CT Price</div><div>Amount</div>
+            </div>
+            {bp.diamonds.map(d => (
+              <div key={d.id} style={{ display: 'grid', gridTemplateColumns: '2fr 40px 60px 76px 72px', gap: 4, padding: '7px 14px', borderBottom: '1px solid var(--border)', alignItems: 'center', fontSize: 12 }}>
+                <div style={{ fontWeight: 600, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.size}</div>
+                {show('dQty') && <div style={{ fontSize: 12 }}>{d.qty}</div>}
+                {show('dCarat') && <div style={{ fontSize: 12 }}>{d.caratTotal}</div>}
+                {show('dCtPrice') && <div style={{ fontSize: 12 }}>{d.ctPrice}</div>}
+                {show('dAmount') && <div style={{ textAlign: 'right', fontWeight: 700, fontSize: 12 }}>{d.amount.toFixed(2)}</div>}
+              </div>
+            ))}
+            {show('totalDiamondAmt') && <div className="breakup-row" style={{ background: 'var(--neutral-50)' }}><div className="breakup-label" style={{ fontWeight: 700 }}>Total Diamond Amount</div><div className="breakup-value" style={{ fontWeight: 800 }}>{fmtAED(bp.totalDiamondAmount)}</div></div>}
+            {show('discountDiamond') && <DiscountRow label="Discount on Diamond" pct={item.diamondDiscountPct} enabled={!!item.diamondDiscountEnabled} onToggle={() => updateItem({ diamondDiscountEnabled: !item.diamondDiscountEnabled })} onPctChange={v => updateItem({ diamondDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnDiamond} />}
+          </div>
+
+          {/* METAL DETAILS — read-only */}
+          <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+            <div className="breakup-section-title">Metal (Gold) Details</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, padding: '6px 14px', background: 'var(--neutral-100)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {show('metal') && <div>Metal</div>}{show('karat') && <div>Karat</div>}{show('ratePerG') && <div>Rate/g</div>}{show('netWtMetal') && <div>Net Wt</div>}{show('goldAmount') && <div>Amount</div>}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4, padding: '8px 14px', borderBottom: '1px solid var(--border)', alignItems: 'center', fontSize: 12 }}>
+              {show('metal') && <div style={{ fontWeight: 600 }}>{item.metal}</div>}
+              {show('karat') && <div style={{ fontWeight: 600, color: 'var(--gold-dark)' }}>{item.karat}</div>}
+              {show('ratePerG') && <div style={{ fontWeight: 600 }}>{goldRate}</div>}
+              {show('netWtMetal') && <div>{fmt2(bp.netWeightG)}g</div>}
+              {show('goldAmount') && <div style={{ fontWeight: 700 }}>{fmtAED(bp.goldAmount)}</div>}
+            </div>
+            {show('makingCharge') && <div className="breakup-row"><div className="breakup-label">Making Charge<span className={`badge ${bp.makingChargeMode === 'fixed' ? 'badge-error' : 'badge-success'}`} style={{ marginLeft: 6, fontSize: 10 }}>{bp.makingChargeMode === 'fixed' ? 'Fixed' : `${charges.makingChargePercent}%`}</span></div><div className="breakup-value">{fmtAED(bp.makingCharge)}</div></div>}
+            {show('discountMaking') && <DiscountRow label="Discount on Making" pct={item.makingDiscountPct} enabled={!!item.makingDiscountEnabled} onToggle={() => updateItem({ makingDiscountEnabled: !item.makingDiscountEnabled })} onPctChange={v => updateItem({ makingDiscountPct: parseFloat(v) || 0 })} value={bp.discountOnMaking} />}
+          </div>
+
+          {/* OTHER STONE — read-only */}
+          {(show('osStone') || show('osCarat') || show('osAmount')) && (
+            <div className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+              <div className="breakup-section-title">Other Stone</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4, padding: '6px 14px', background: 'var(--neutral-100)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {show('osStone') && <div>Stone</div>}{show('osCarat') && <div>Carat</div>}{show('osRatePerCt') && <div>Rate/ct</div>}{show('osAmount') && <div>Amount</div>}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 4, padding: '8px 14px', alignItems: 'center', fontSize: 12 }}>
+                {show('osStone') && <div style={{ fontWeight: 600 }}>{item.otherStoneName}</div>}
+                {show('osCarat') && <div>{item.otherStoneWeightCt} ct</div>}
+                {show('osRatePerCt') && <div>{charges.otherStoneRatePerCt}/ct</div>}
+                {show('osAmount') && <div style={{ fontWeight: 700 }}>{fmtAED(bp.otherStoneAmount)}</div>}
+              </div>
+            </div>
+          )}
+
+          {/* COST SUMMARY — cert editable, rest read-only */}
           <div className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
             <div className="breakup-section-title">Cost Summary</div>
             {show('sumDiamondAmt') && <div className="breakup-row"><div className="breakup-label">Diamond Amount</div><div className="breakup-value">{fmtAED(bp.totalDiamondAmount)}</div></div>}
@@ -484,7 +562,8 @@ export default function CostBreakupScreen() {
             {show('sumMakingCharge') && <div className="breakup-row"><div className="breakup-label">Making Charge</div><div className="breakup-value">{fmtAED(bp.makingCharge)}</div></div>}
             {show('sumDiscMaking') && item.makingDiscountEnabled && <div className="breakup-row"><div className="breakup-label" style={{ color: 'var(--error)' }}>Less: Discount on Making ({item.makingDiscountPct}%)</div><div className="breakup-value negative">{fmtAED(bp.discountOnMaking)}</div></div>}
             {show('sumOtherStone') && <div className="breakup-row"><div className="breakup-label">Other Stone Amount</div><div className="breakup-value">{fmtAED(bp.otherStoneAmount)}</div></div>}
-            {show('certCharge') && charges.includeCertification && <div className="breakup-row"><div className="breakup-label">Certification Charge</div><div className="breakup-value">{fmtAED(bp.certCharge)}</div></div>}
+            {/* Certification — editable */}
+            <CertRow charges={charges} dispatch={dispatch} show={show} />
             <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
             {show('subtotal') && <div className="breakup-row" style={{ background: 'var(--neutral-50)' }}><div className="breakup-label" style={{ fontWeight: 700 }}>Subtotal (before VAT)</div><div className="breakup-value" style={{ fontWeight: 800, fontSize: 15 }}>{fmtAED(bp.subtotal)}</div></div>}
             {show('vat') && <div className="breakup-row"><div className="breakup-label">VAT 5%</div><div className="breakup-value">{fmtAED(bp.vat)}</div></div>}
@@ -494,7 +573,7 @@ export default function CostBreakupScreen() {
 
         <div style={{ padding: '0 12px 32px' }}>
           <button className="btn btn-primary btn-full" style={{ fontSize: 16 }} onClick={() => navigate('printslip')}>
-            🖨 Preview & Print Slip
+            🖨 Preview &amp; Print Slip
           </button>
         </div>
       </div>

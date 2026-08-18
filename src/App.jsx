@@ -21,6 +21,7 @@ import BreakupVisibilitySettings from './screens/settings/BreakupVisibilitySetti
 import PrintVisibilitySettings from './screens/settings/PrintVisibilitySettings';
 import SpecialPriceSettings from './screens/settings/SpecialPriceSettings';
 import RizoyaMarkupSettings from './screens/settings/RizoyaMarkupSettings';
+import SwaB2bChartSettings from './screens/settings/SwaB2bChartSettings';
 
 const SCREEN_MAP = {
   login:            LoginScreen,
@@ -40,6 +41,7 @@ const SCREEN_MAP = {
   'settings-print':   PrintVisibilitySettings,
   'settings-special':        SpecialPriceSettings,
   'settings-rizoya-markup':  RizoyaMarkupSettings,
+  'settings-swa-b2b':        SwaB2bChartSettings,
 };
 
 function AppInner() {

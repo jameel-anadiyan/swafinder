@@ -3,14 +3,16 @@ import { useApp } from '../context/AppContext';
 import NavBar, { StatusBar } from '../components/NavBar';
 
 const SETTINGS_ITEMS = [
-  { key: 'gold',     icon: '🪙', label: 'Gold Price',           sub: 'Update 18K rate & timestamp',      color: '#FDF3DC', screen: 'settings-gold'    },
-  { key: 'diamond',  icon: '💎', label: 'Diamond Chart',        sub: 'View & set My Price for 117 rows', color: '#EEF3FF', screen: 'settings-diamond' },
-  { key: 'cert',     icon: '📋', label: 'Certification Charge', sub: 'Flat charge & include toggle',     color: '#F0FFF4', screen: 'settings-cert'    },
-  { key: 'making',   icon: '🔧', label: 'Making Charge',        sub: 'MC%, net-weight band & fixed min', color: '#FFF0F0', screen: 'settings-making'  },
-  { key: 'stone',    icon: '💠', label: 'Other Stone Charge',   sub: 'Rate per carat (AED)',             color: '#F0F8FF', screen: 'settings-stone'   },
-  { key: 'breakup',  icon: '📊', label: 'Break-Up Settings',   sub: 'Show / hide fields in cost view',  color: '#FDF8EF', screen: 'settings-breakup' },
-  { key: 'print',    icon: '🖨️', label: 'Print Settings',       sub: 'Show / hide fields on print slip', color: '#F5F0FF', screen: 'settings-print'   },
+  { key: 'gold',     icon: '🪙', label: 'Gold Price',               sub: 'Update 18K rate & timestamp',         color: '#FDF3DC', screen: 'settings-gold'    },
+  { key: 'diamond',  icon: '💎', label: 'Diamond Chart',            sub: 'View & set My Price for 117 rows',    color: '#EEF3FF', screen: 'settings-diamond' },
+  { key: 'b2b',      icon: '📋', label: 'SWA B2B Diamond Chart',    sub: 'Reference prices used in calculation · Read-only', color: '#F0F5FF', screen: 'settings-swa-b2b' },
+  { key: 'cert',     icon: '🏷️', label: 'Certification Charge',     sub: 'Flat charge & include toggle',        color: '#F0FFF4', screen: 'settings-cert'    },
+  { key: 'making',   icon: '🔧', label: 'Making Charge',            sub: 'MC%, net-weight band & fixed min',    color: '#FFF0F0', screen: 'settings-making'  },
+  { key: 'stone',    icon: '💠', label: 'Other Stone Charge',       sub: 'Rate per carat (AED)',                color: '#F0F8FF', screen: 'settings-stone'   },
+  { key: 'breakup',  icon: '📊', label: 'Break-Up Settings',        sub: 'Show / hide fields in cost view',    color: '#FDF8EF', screen: 'settings-breakup' },
+  { key: 'print',    icon: '🖨️', label: 'Print Settings',           sub: 'Show / hide fields on print slip',   color: '#F5F0FF', screen: 'settings-print'   },
 ];
+
 
 function SettingsRow({ item, onClick }) {
   return (

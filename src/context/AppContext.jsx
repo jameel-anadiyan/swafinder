@@ -268,7 +268,7 @@ function reducer(state, action) {
 
 // ─── Context ───────────────────────────────────────────────────────────────────
 const AppContext = createContext(null);
-const STORAGE_KEY = 'swa_finder_state_v4'; // bumped: otherWeightG + gold interval + rizoya markup
+const STORAGE_KEY = 'swa_finder_state_v5'; // bumped: default discounts set to 0, rizoya breakup
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, () => {

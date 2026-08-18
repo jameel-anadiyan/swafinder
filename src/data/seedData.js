@@ -186,9 +186,9 @@ export const SAMPLE_ITEM = {
   metal: 'Gold',
   karat: '18K',
   // Discounts are opt-in — user must enable them
-  diamondDiscountPct: 5,
+  diamondDiscountPct: 0,
   diamondDiscountEnabled: false,
-  makingDiscountPct: 5,
+  makingDiscountPct: 0,
   makingDiscountEnabled: false,
   // SWA Burjman special discount (0–10%, max enforced at breakup)
   specialDiscountPct: 0,

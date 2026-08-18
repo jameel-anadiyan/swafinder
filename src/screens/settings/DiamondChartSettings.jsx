@@ -9,7 +9,7 @@ export default function DiamondChartSettings() {
 
   const [search, setSearch] = useState('');
   const [pctInput, setPctInput] = useState(String(pm.percent || ''));
-  const [activeTab, setActiveTab] = useState(pm.mode === 'swaPlusPercent' ? 1 : 0); // 0=manual, 1=swapct
+  const [activeTab, setActiveTab] = useState(pm.mode === 'swaPlusPercent' ? 1 : 0);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -37,7 +37,17 @@ export default function DiamondChartSettings() {
     dispatch({ type: 'SET_PRICING_METHOD', payload: { mode: idx === 0 ? 'manual' : 'swaPlusPercent' } });
   };
 
-  const fmtPrice = v => v !== null && v !== undefined ? v.toLocaleString() : '—';
+  // % difference: ((myPrice - swaCaratCost) / swaCaratCost) * 100
+  const pctDiff = (row) => {
+    if (row.myPrice == null || row.myPrice === 0 || row.swaCaratCost === 0) return null;
+    return ((row.myPrice - row.swaCaratCost) / row.swaCaratCost) * 100;
+  };
+
+  const fmtPct = (v) => {
+    if (v === null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+    const color = v > 0 ? '#16A34A' : v < 0 ? '#DC2626' : 'var(--text-muted)';
+    return <span style={{ color, fontWeight: 700, fontSize: 11 }}>{v > 0 ? '+' : ''}{v.toFixed(1)}%</span>;
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--surface-2)', animation: 'slideInRight 0.3s ease forwards' }}>
@@ -110,7 +120,7 @@ export default function DiamondChartSettings() {
       {/* Table */}
       <div className="screen-scroll" style={{ flex: 1 }}>
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table" style={{ minWidth: 420 }}>
+          <table className="data-table" style={{ minWidth: 480 }}>
             <thead>
               <tr>
                 <th style={{ width: 36 }}>#</th>
@@ -118,30 +128,37 @@ export default function DiamondChartSettings() {
                 <th>Wt (ct)</th>
                 <th>SWA Cost</th>
                 <th style={{ background: '#1A3A6A', color: 'var(--gold-light)' }}>My Price</th>
+                <th style={{ background: '#0F2D1F', color: '#4ADE80', textAlign: 'center' }}>% vs SWA</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(row => (
-                <tr key={row.no}>
-                  <td style={{ color: 'var(--text-muted)', fontSize: 11 }}>{row.no}</td>
-                  <td style={{ fontWeight: 600, fontSize: 12, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.size}>{row.size}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{row.weightCt}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
-                    {row.swaCaratCost.toLocaleString()}
-                  </td>
-                  <td>
-                    <input
-                      className="td-input"
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="—"
-                      value={row.myPrice ?? ''}
-                      onChange={e => handleRowEdit(row.no, e.target.value)}
-                      style={{ width: 90 }}
-                    />
-                  </td>
-                </tr>
-              ))}
+              {filtered.map(row => {
+                const diff = pctDiff(row);
+                return (
+                  <tr key={row.no}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 11 }}>{row.no}</td>
+                    <td style={{ fontWeight: 600, fontSize: 12, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.size}>{row.size}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{row.weightCt}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {row.swaCaratCost.toLocaleString()}
+                    </td>
+                    <td>
+                      <input
+                        className="td-input"
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="—"
+                        value={row.myPrice ?? ''}
+                        onChange={e => handleRowEdit(row.no, e.target.value)}
+                        style={{ width: 90 }}
+                      />
+                    </td>
+                    <td style={{ textAlign: 'center', background: diff !== null ? (diff > 0 ? 'rgba(22,163,74,0.06)' : diff < 0 ? 'rgba(220,38,38,0.06)' : 'transparent') : 'transparent' }}>
+                      {fmtPct(diff)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {filtered.length === 0 && (
@@ -152,7 +169,7 @@ export default function DiamondChartSettings() {
         </div>
 
         <div style={{ padding: '12px 16px', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-          {filtered.length} of {chart.length} rows shown · My Price feeds CT Price in Cost Breakup
+          {filtered.length} of {chart.length} rows shown · My Price feeds CT Price in Cost Breakup · % vs SWA shows your markup over SWA cost
         </div>
       </div>
     </div>
